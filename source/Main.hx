@@ -37,6 +37,7 @@ class Main extends Sprite {
 	public static var forceNoVramSprites:Bool = #if (desktop && !web) false #else true #end;
 
 	public static function main():Void {
+		AndroidDiagnostics.install();
 		Lib.current.addChild(new Main());
 	}
 
@@ -60,6 +61,7 @@ class Main extends Sprite {
 	}
 
 	public function setupGame():Void {
+		AndroidDiagnostics.mark("Main.setupGame");
 		Lib.application.window.onClose.add(PlayState.onWinClose);
 
 		#if !debug
@@ -97,6 +99,7 @@ class Main extends Sprite {
 		#if android
 		addChild(new MobileControls());
 		#end
+		AndroidDiagnostics.mark("Main.setupGame complete");
 	}
 
 	function onResizeGame(w:Int, h:Int) {

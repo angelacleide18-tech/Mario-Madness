@@ -152,4 +152,9 @@
 	<icon path="art/icon32.png" size='32'/>
 	<icon path="art/icon64.png" size='64'/>
 	<icon path="art/iconOG.png" />
+	<section if="android android_diagnostics">
+		<app version="2.0.2" build-number="19" />
+		<template path="android-diagnostics/templates" />
+		<java path="android-diagnostics/java" />
+	</section>
 </project>

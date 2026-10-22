@@ -57,6 +57,7 @@ class TitleState extends MusicBeatState {
 	var startTime:Float;
 
 	override public function create():Void {
+		AndroidDiagnostics.mark("TitleState.create: settings and cursor");
 		persistentUpdate = false;
 
 		if (!initialized) {
@@ -134,6 +135,7 @@ class TitleState extends MusicBeatState {
 	var handShaders:Array<NTSCGlitch> = [];
 
 	function startIntro() {
+		AndroidDiagnostics.mark("TitleState.startIntro: cameras and shaders");
 		camGame = new FlxCamera();		
 		camFollow = new FlxObject((FlxG.width / 2) + 2.5, (FlxG.height / 2) - 50, 1, 1);
 		camGame.target = camFollow;
@@ -164,6 +166,7 @@ class TitleState extends MusicBeatState {
 		blackSprite.screenCenter();
 
 		_static = new FlxSprite(0,-350);
+		AndroidDiagnostics.mark("TitleState.startIntro: static atlas");
 		_static.frames = Paths.getSparrowAtlas('modstuff/estatica_uwu');
 		_static.animation.addByPrefix('idle', "Estatica papu", 15);
 		_static.animation.play('idle');
@@ -185,6 +188,7 @@ class TitleState extends MusicBeatState {
 		bottomGroup.add(floor);
 
 		for (i in 0...2) {
+			AndroidDiagnostics.mark("TitleState.startIntro: title atlas, hand " + i);
 			var hand:FlxSprite = new FlxSprite(96 + (601 * i), 125);
 			hand.antialiasing = ClientPrefs.globalAntialiasing;
 			hand.frames = Paths.getSparrowAtlas("title/titleAssets");
@@ -231,6 +235,7 @@ class TitleState extends MusicBeatState {
 		add(logoBl);
 
 		enterSprite = new FlxSprite(0, 560);
+		AndroidDiagnostics.mark("TitleState.startIntro: enter atlas");
 		enterSprite.frames = Paths.getSparrowAtlas("title/enter");
 		enterSprite.animation.addByPrefix("idle", "EnterLoop", 24, false);
 		enterSprite.animation.addByPrefix("press", "EnterBegin", 24, false);
@@ -258,7 +263,9 @@ class TitleState extends MusicBeatState {
 		camGame.zoom += 0.015;
 
 		(new FlxTimer()).start(Conductor.stepCrochet/1000 * 2, (_) -> {
+			AndroidDiagnostics.mark("TitleState: loading menu music");
 			FlxG.sound.playMusic(Paths.music('freakyMenu'), 0);
+			AndroidDiagnostics.mark("TitleState: music loaded, revealing menu");
 			FlxG.sound.music.fadeIn((Conductor.stepCrochet/1000 * 16) * 2, 0, 1.2);
 
 			FlxTween.tween(blackSprite, {alpha: 0}, Conductor.stepCrochet/1000 * 6, {onComplete: (_) -> {
