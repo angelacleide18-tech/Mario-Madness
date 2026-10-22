@@ -1,3 +1,59 @@
+#if android
+import flixel.FlxBasic;
+import flixel.FlxCamera;
+import flixel.FlxG;
+import flixel.FlxState;
+import hxcodec.VideoSprite;
+import openfl.events.Event;
+class DSVideo extends FlxBasic {
+	public var finishCallback:Void->Void;
+	public var finished:Bool = false;
+	public var state:FlxState;
+
+	var player:VideoSprite;
+	var playbackActive:Bool = true;
+
+	public function new(name:String, camera:FlxCamera, state:FlxState) {
+		super();
+		this.state = state;
+		player = new VideoSprite(448, 72);
+		player.canvasWidth = 384;
+		player.canvasHeight = 576;
+		player.cameras = [camera];
+		FlxG.signals.preStateSwitch.add(cleanup);
+		player.finishCallback = function() {
+			playbackActive = false;
+			finished = true;
+			FlxG.signals.preStateSwitch.remove(cleanup);
+			if (finishCallback != null)
+				finishCallback();
+		};
+		state.add(player);
+		player.playVideo(name);
+	}
+
+	function cleanup():Void {
+		FlxG.signals.preStateSwitch.remove(cleanup);
+		if (!playbackActive || player == null)
+			return;
+		playbackActive = false;
+		player.finishCallback = null;
+		var handler = player.bitmap;
+		handler.finishCallback = null;
+		@:privateAccess FlxG.stage.removeEventListener(Event.ENTER_FRAME, handler.update);
+		FlxG.signals.focusGained.remove(handler.resume);
+		FlxG.signals.focusLost.remove(handler.pause);
+		handler.dispose();
+		FlxG.removeChild(handler);
+	}
+
+	override public function destroy():Void {
+		cleanup();
+		finishCallback = null;
+		super.destroy();
+	}
+}
+#else
 import flixel.FlxBasic;
 import flixel.FlxCamera;
 import flixel.FlxG;
@@ -13,8 +69,7 @@ import vlc.DSBitmap;
 #end
 
 // its just FlxVideo but with different positioning
-class DSVideo extends FlxBasic
-{
+class DSVideo extends FlxBasic {
 	#if VIDEOS_ALLOWED
 	public var finishCallback:Void->Void;
 
@@ -25,14 +80,12 @@ class DSVideo extends FlxBasic
 
 	public var state:FlxState;
 
-	public function new(name:String, camera:FlxCamera, state:FlxState)
-	{
+	public function new(name:String, camera:FlxCamera, state:FlxState) {
 		super();
 
 		this.state = state;
 
-		finishCallback = function()
-		{
+		finishCallback = function() {
 			finished = true;
 		};
 
@@ -45,17 +98,14 @@ class DSVideo extends FlxBasic
 		netConnect.connect(null);
 		var netStream = new NetStream(netConnect);
 		netStream.client = {
-			onMetaData: function()
-			{
+			onMetaData: function() {
 				player.attachNetStream(netStream);
 				player.width = 256;
 				player.height = 384;
 			}
 		};
-		netConnect.addEventListener(NetStatusEvent.NET_STATUS, function(event:NetStatusEvent)
-		{
-			if (event.info.code == "NetStream.Play.Complete")
-			{
+		netConnect.addEventListener(NetStatusEvent.NET_STATUS, function(event:NetStatusEvent) {
+			if (event.info.code == "NetStream.Play.Complete") {
 				netStream.dispose();
 				if (FlxG.game.contains(player))
 					FlxG.game.removeChild(player);
@@ -91,8 +141,7 @@ class DSVideo extends FlxBasic
 	}
 
 	#if desktop
-	function checkFile(fileName:String):String
-	{
+	function checkFile(fileName:String):String {
 		var pDir = "";
 		var appDir = "file:///" + Sys.getCwd() + "/";
 
@@ -104,34 +153,27 @@ class DSVideo extends FlxBasic
 		return pDir + fileName;
 	}
 
-	public static function onFocus()
-	{
-		if (vlcBitmap != null)
-		{
+	public static function onFocus() {
+		if (vlcBitmap != null) {
 			vlcBitmap.resume();
 		}
 	}
 
-	public static function onFocusLost()
-	{
-		if (vlcBitmap != null)
-		{
+	public static function onFocusLost() {
+		if (vlcBitmap != null) {
 			vlcBitmap.pause();
 		}
 	}
 
-	function fixVolume(e:Event)
-	{
+	function fixVolume(e:Event) {
 		// shitty volume fix
 		vlcBitmap.volume = 0;
-		if (!FlxG.sound.muted && FlxG.sound.volume > 0.01)
-		{ // Kind of fixes the volume being too low when you decrease it
+		if (!FlxG.sound.muted && FlxG.sound.volume > 0.01) { // Kind of fixes the volume being too low when you decrease it
 			vlcBitmap.volume = FlxG.sound.volume * 0.5 + 0.5;
 		}
 	}
 
-	public function onVLCComplete()
-	{
+	public function onVLCComplete() {
 		vlcBitmap.renderSprite.visible = false;
 
 		state.remove(vlcBitmap.renderSprite);
@@ -141,24 +183,21 @@ class DSVideo extends FlxBasic
 		// Clean player, just in case!
 		vlcBitmap.dispose();
 
-		if (FlxG.game.contains(vlcBitmap))
-		{
+		if (FlxG.game.contains(vlcBitmap)) {
 			FlxG.game.removeChild(vlcBitmap);
 		}
 
-		if (finishCallback != null)
-		{
+		if (finishCallback != null) {
 			finishCallback();
 		}
 	}
 
-	function onVLCError()
-	{
+	function onVLCError() {
 		trace("An error has occured while trying to load the video.\nPlease, check if the file you're loading exists.");
-		if (finishCallback != null)
-		{
+		if (finishCallback != null) {
 			finishCallback();
 		}
 	}
 	#end
 }
+#end

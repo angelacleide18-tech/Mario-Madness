@@ -1,3 +1,65 @@
+#if android
+import flixel.FlxBasic;
+import flixel.FlxG;
+import hxcodec.VideoHandler;
+import openfl.events.Event;
+class FlxVideo extends FlxBasic {
+	public var finishCallback:Void->Void;
+
+	public static var player:VideoHandler;
+
+	var ownedPlayer:VideoHandler;
+
+	public function new(name:String) {
+		super();
+		var handler = new VideoHandler();
+		ownedPlayer = handler;
+		player = handler;
+		FlxG.signals.preStateSwitch.add(cleanup);
+		handler.finishCallback = function() {
+			ownedPlayer = null;
+			if (player == handler)
+				player = null;
+			FlxG.signals.preStateSwitch.remove(cleanup);
+			if (finishCallback != null)
+				finishCallback();
+		};
+		handler.playVideo(name);
+	}
+
+	function cleanup():Void {
+		FlxG.signals.preStateSwitch.remove(cleanup);
+		var handler = ownedPlayer;
+		ownedPlayer = null;
+		if (handler == null)
+			return;
+		if (player == handler)
+			player = null;
+		handler.finishCallback = null;
+		@:privateAccess FlxG.stage.removeEventListener(Event.ENTER_FRAME, handler.update);
+		FlxG.signals.focusGained.remove(handler.resume);
+		FlxG.signals.focusLost.remove(handler.pause);
+		handler.dispose();
+		FlxG.removeChild(handler);
+	}
+
+	override public function destroy():Void {
+		cleanup();
+		finishCallback = null;
+		super.destroy();
+	}
+
+	public static function onFocus():Void {
+		if (player != null)
+			player.resume();
+	}
+
+	public static function onFocusLost():Void {
+		if (player != null)
+			player.pause();
+	}
+}
+#else
 #if web
 import openfl.events.NetStatusEvent;
 import openfl.media.Video;
@@ -10,8 +72,7 @@ import vlc.VlcBitmap;
 import flixel.FlxBasic;
 import flixel.FlxG;
 
-class FlxVideo extends FlxBasic
-{
+class FlxVideo extends FlxBasic {
 	#if VIDEOS_ALLOWED
 	public var finishCallback:Void->Void = null;
 
@@ -19,8 +80,7 @@ class FlxVideo extends FlxBasic
 	public static var vlcBitmap:VlcBitmap;
 	#end
 
-	public function new(name:String)
-	{
+	public function new(name:String) {
 		super();
 
 		#if web
@@ -32,17 +92,14 @@ class FlxVideo extends FlxBasic
 		netConnect.connect(null);
 		var netStream = new NetStream(netConnect);
 		netStream.client = {
-			onMetaData: function()
-			{
+			onMetaData: function() {
 				player.attachNetStream(netStream);
 				player.width = FlxG.width;
 				player.height = FlxG.height;
 			}
 		};
-		netConnect.addEventListener(NetStatusEvent.NET_STATUS, function(event:NetStatusEvent)
-		{
-			if (event.info.code == "NetStream.Play.Complete")
-			{
+		netConnect.addEventListener(NetStatusEvent.NET_STATUS, function(event:NetStatusEvent) {
+			if (event.info.code == "NetStream.Play.Complete") {
 				netStream.dispose();
 				if (FlxG.game.contains(player))
 					FlxG.game.removeChild(player);
@@ -74,8 +131,7 @@ class FlxVideo extends FlxBasic
 	}
 
 	#if desktop
-	function checkFile(fileName:String):String
-	{
+	function checkFile(fileName:String):String {
 		var pDir = "";
 		var appDir = "file:///" + Sys.getCwd() + "/";
 
@@ -87,58 +143,48 @@ class FlxVideo extends FlxBasic
 		return pDir + fileName;
 	}
 
-	public static function onFocus()
-	{
-		if (vlcBitmap != null && FlxG.autoPause)
-		{
+	public static function onFocus() {
+		if (vlcBitmap != null && FlxG.autoPause) {
 			vlcBitmap.resume();
 		}
 	}
 
-	public static function onFocusLost()
-	{
-		if (vlcBitmap != null && FlxG.autoPause)
-		{
+	public static function onFocusLost() {
+		if (vlcBitmap != null && FlxG.autoPause) {
 			vlcBitmap.pause();
 		}
 	}
 
-	function fixVolume(e:Event)
-	{
+	function fixVolume(e:Event) {
 		// shitty volume fix
 		vlcBitmap.volume = 0;
-		if (!FlxG.sound.muted && FlxG.sound.volume > 0.01)
-		{ // Kind of fixes the volume being too low when you decrease it
+		if (!FlxG.sound.muted && FlxG.sound.volume > 0.01) { // Kind of fixes the volume being too low when you decrease it
 			vlcBitmap.volume = FlxG.sound.volume * 0.5 + 0.5;
 		}
 	}
 
-	public function onVLCComplete()
-	{
+	public function onVLCComplete() {
 		vlcBitmap.stop();
 
 		// Clean player, just in case!
 		vlcBitmap.dispose();
 
-		if (FlxG.game.contains(vlcBitmap))
-		{
+		if (FlxG.game.contains(vlcBitmap)) {
 			FlxG.game.removeChild(vlcBitmap);
 		}
 
-		if (finishCallback != null)
-		{
+		if (finishCallback != null) {
 			finishCallback();
 		}
 	}
 
-	function onVLCError()
-	{
+	function onVLCError() {
 		trace("An error has occured while trying to load the video.\nPlease, check if the file you're loading exists.");
-		if (finishCallback != null)
-		{
+		if (finishCallback != null) {
 			finishCallback();
 		}
 	}
 	#end
 	#end
 }
+#end

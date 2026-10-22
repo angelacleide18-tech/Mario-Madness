@@ -2,8 +2,10 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Mario's Madness" file="Mario" packageName="com.shadowmario.psychengine" package="com.shadowmario.psychengine" main="Main" version="2.0.1" company="ShadowMario" />
+	<app title="Friday Night Funkin': Mario's Madness" file="Mario" packageName="com.mariomadness.mobile" package="com.mariomadness.mobile" main="Main" version="2.0.1" company="ShadowMario" />
 	
+	<config:android target-sdk-version="33" minimum-sdk-version="23" build-tools-version="33.0.2" gradle-version="7.6.4" gradle-plugin="7.4.2" />
+
 	<!--Switch Export with Unique ApplicationID and Icon-->
 	<set name="APP_ID" value="0x0100f6c013bbc000" />
 	
@@ -46,10 +48,10 @@
 	<!-- PSYCH ENGINE CUSTOMIZATION -->
 	<define name="MODS_ALLOWED" if="desktop" />
 	<define name="LUA_ALLOWED" if="windows" />
-	<define name="VIDEOS_ALLOWED" if="web || windows" unless="32"/>
+	<define name="VIDEOS_ALLOWED" if="web || windows || android" unless="32"/>
 	
 	<!-- <define name="PRELOAD_ALL" /> -->
-	<define name="PRELOAD_ALL" unless="web" />
+	<define name="PRELOAD_ALL" unless="web || android" />
 	<define name="NO_PRELOAD_ALL" unless="PRELOAD_ALL"/>
 	
 	<library name="videos"        preload="true" />
@@ -63,7 +65,7 @@
 		<library name="shared"        preload="false" />
 	</section>
 	
-	<haxelib name="hxcodec" version="2.6.1" />
+	<haxelib name="hxCodec" version="2.6.1" />
 
 	<assets path="plugins/"             rename=''               if="VIDEOS_ALLOWED windows" />
 	<assets path="dlls/"                rename=''               if="VIDEOS_ALLOWED windows" />

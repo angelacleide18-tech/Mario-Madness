@@ -1,5 +1,6 @@
 package;
 
+#if windows
 import cpp.*;
 
 @:native("HWND__") extern class HWNDStruct {}
@@ -15,8 +16,7 @@ typedef COLORREF = DWORD;
     #include <hxcpp.h>
     #include <iostream>
 ")
-class Transparency
-{
+class Transparency {
 	public static var win:HWND;
 	private static var winStyle:LONG;
 	private static var winExStyle:LONG;
@@ -41,17 +41,14 @@ class Transparency
 	private static function getLastError():DWORD
 		return null;
 
-	public static function setTransparency(winName:String, color:Int):Void
-	{
+	public static function setTransparency(winName:String, color:Int):Void {
 		win = findWindow(null, winName);
-		if (win == null)
-		{
+		if (win == null) {
 			trace("Error finding window!");
 			trace("Code: " + Std.string(getLastError()));
 		}
 		winStyle = getWindowLong(win, -16);
-		if (winStyle == 0)
-		{
+		if (winStyle == 0) {
 			trace("Error getting window style!");
 			trace("Code: " + Std.string(getLastError()));
 		}
@@ -60,25 +57,21 @@ class Transparency
 			trace("Code: " + Std.string(getLastError()));
 		}*/
 		winExStyle = getWindowLong(win, -20);
-		if (winExStyle == 0)
-		{
+		if (winExStyle == 0) {
 			trace("Error getting extended window style!");
 			trace("Code: " + Std.string(getLastError()));
 		}
-		if (setWindowLong(win, -20, 0x00080000) == 0)
-		{
+		if (setWindowLong(win, -20, 0x00080000) == 0) {
 			trace("Error setting window to be layered!");
 			trace("Code: " + Std.string(getLastError()));
 		}
-		if (setLayeredWindowAttributes(win, color, 0, 0x00000001) == 0)
-		{
+		if (setLayeredWindowAttributes(win, color, 0, 0x00000001) == 0) {
 			trace("Error setting color key on window!");
 			trace("Code: " + Std.string(getLastError()));
 		}
 	}
 
-	public static function reset():Void
-	{
+	public static function reset():Void {
 		/*if (setWindowLong(win, -20, winExStyle) == 0) {
 				trace("Error restoring extended window style!");
 				trace("Code: " + Std.string(getLastError()));
@@ -89,3 +82,11 @@ class Transparency
 		}*/
 	}
 }
+#else
+// Desktop window transparency has no equivalent for the Android activity.
+class Transparency {
+	public static function setTransparency(winName:String, color:Int):Void {}
+
+	public static function reset():Void {}
+}
+#end

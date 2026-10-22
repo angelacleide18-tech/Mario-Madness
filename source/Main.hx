@@ -25,6 +25,7 @@ class Main extends Sprite {
 	public static var initialState:Class<FlxState> = TitleState; // The FlxState the game starts with.
 	public static var gameWidth:Int = initialState == TitleState ? 921 : 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
 	public static var gameHeight:Int = initialState == TitleState ? 691 : 720; // Height of the game in pixels (might be less / more in actual pixels depending on your zoom).
+
 	var zoom:Float = -1; // If -1, zoom is automatically calculated to fit the window dimensions.
 	var framerate:Int = 60; // How many frames per second the game should run at.
 	var skipSplash:Bool = true; // Whether to skip the flixel splash screen that appears in release mode.
@@ -65,23 +66,21 @@ class Main extends Sprite {
 		initialState = TitleState;
 		#end
 		FlxTransitionableState.skipNextTransOut = true;
-		#if !mobile
 		fpsVar = new FPS(10, 4, 0xFFFFFF);
 
 		if (fpsVar != null) {
 			fpsVar.visible = false;
 		}
-		#end
 		addChild(new FlxGame(gameWidth, gameHeight, initialState, framerate, framerate, skipSplash, startFullscreen));
 
-		FlxG.signals.preStateSwitch.add(function () {
+		FlxG.signals.preStateSwitch.add(function() {
 			if (!Main.skipNextDump) {
 				Paths.clearStoredMemory(true);
 				FlxG.bitmap.dumpCache();
 			}
 			clearMajor();
 		});
-		FlxG.signals.postStateSwitch.add(function () {
+		FlxG.signals.postStateSwitch.add(function() {
 			Paths.clearUnusedMemory();
 			clearMajor();
 			Main.skipNextDump = false;
@@ -95,25 +94,29 @@ class Main extends Sprite {
 		#end
 
 		FlxG.signals.gameResized.add(onResizeGame);
+		#if android
+		addChild(new MobileControls());
+		#end
 	}
 
 	function onResizeGame(w:Int, h:Int) {
 		fixShaderSize(this);
-		if (FlxG.game != null) fixShaderSize(FlxG.game);
+		if (FlxG.game != null)
+			fixShaderSize(FlxG.game);
 
-		if (FlxG.cameras == null) return;
+		if (FlxG.cameras == null)
+			return;
 		for (cam in FlxG.cameras.list) {
 			@:privateAccess
 			if (cam != null && (cam._filters != null || cam._filters != []))
 				fixShaderSize(cam.flashSprite);
-		}	
+		}
 	}
 
 	function fixShaderSize(sprite:Sprite) // Shout out to Ne_Eo for bringing this to my attention
 	{
 		@:privateAccess {
-			if (sprite != null)
-			{
+			if (sprite != null) {
 				sprite.__cacheBitmap = null;
 				sprite.__cacheBitmapData = null;
 				sprite.__cacheBitmapData2 = null;
@@ -134,4 +137,3 @@ class Main extends Sprite {
 		#end
 	}
 }
-
